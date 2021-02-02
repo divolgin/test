@@ -16,14 +16,14 @@ jobs:
     - name: Install kubectl-grid
       shell: bash
       run: |
-        curl -L -o /usr/local/bin/kubectl https://dl.k8s.io/release/v1.20.0/bin/linux/amd64/kubectl
+        sudo curl -L -o /usr/local/bin/kubectl https://dl.k8s.io/release/v1.20.0/bin/linux/amd64/kubectl
 
     - name: Install kubectl-grid
       shell: bash
       run: |
         curl -L -o kubectl-grid.tar.gz https://github.com/replicatedhq/kubectl-grid/releases/download/v0.0.1/kubectl-grid_linux_amd64.tar.gz
         tar zxvf kubectl-grid.tar.gz
-        mv kubectl-grid /usr/local/bin
+        sudo mv kubectl-grid /usr/local/bin
 
     - name: Run test
       shell: bash

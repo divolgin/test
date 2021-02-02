@@ -1,0 +1,34 @@
+apiVersion: grid.replicated.com/v1alpha1
+kind: Grid
+metadata:
+  name: dmitriy-kgrid
+spec:
+  logger:
+     slack:
+        token:
+          valueFrom:
+            osEnv: SLACK_TOKEN
+        channel:
+          valueFrom:
+            osEnv: SLACK_CHANNEL
+  clusters:
+    # - eks:
+    #     existingCluster:
+    #       clusterName: marc-projects
+    #       accessKeyId: 
+    #         valueFrom:
+    #           osEnv: AWS_ACCESS_KEY_ID
+    #       secretAccessKey: 
+    #         valueFrom:
+    #           osEnv: AWS_SECRET_ACCESS_KEY
+    #       region: us-west-1
+    - eks:
+        newCluster:
+          description: dmitriys-new-cluster
+          accessKeyId: 
+            valueFrom:
+              osEnv: AWS_ACCESS_KEY_ID
+          secretAccessKey: 
+            valueFrom:
+              osEnv: AWS_SECRET_ACCESS_KEY
+          region: us-west-1

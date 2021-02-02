@@ -1,0 +1,59 @@
+apiVersion: grid.replicated.com/v1alpha1
+kind: Application
+metadata:
+  name: qakots
+spec:
+  kots:
+    version: "1.29.0"
+    app: qakots
+    licenseID: R2BnyVQrJKEAOxW5rTtKdGbz-jZDBj2_
+    skipPreflights: true
+    namespace: dmitriy
+    configValues:
+      values:
+        a_bool:
+          default: "0"
+        a_label: {}
+        a_required_text:
+          value: sdfsdf
+        a_templated_label: {}
+        a_templated_text:
+          value: M_bHQpcidl8OAbJ7vxjzofo8FKQzKWnEVOiQwG1AFviofjlBdjoY4jP1cvz6GSy2
+        a_text: {}
+        a_textarea: {}
+        a_textarea_default:
+          default: |
+            My
+            default
+            text
+        a_textarea_value:
+          value: |
+            My
+            prepopulated
+            text
+        include_helm_chart:
+          default: "0"
+          value: "1"
+        mysql_password:
+          value: zak8nKTeGJEvAxte//IKpwPBQymlCSmStYEueZVJImgxbhUtJP0WqNORU9unqBdennGICcZKbVI=
+        nginx_port:
+          default: "80"
+        pip_config:
+          value: ZWNobyAiRG8gc29tZXRoaW5nLiIKZWNobyAiRG8gc29tZXRoaW5nIGVsc2UuIgo=
+        registry_endpoint_default_2: {}
+        registry_endpoint_value_2: {}
+        ro_gen_password:
+          value: tKESpLjMOoVkCnJh6tMvu3mWVi2ADAKv3JYvXbkLR0IhT1QvAvMk2W+gd79tQlX5DG8OEcgdOrs=
+        ro_gen_password_default:
+          default: pOFhzR4BBsst8x8l2WTNMIUFrNML3OJLXmOjLSMV
+          value: Z4unEvZ6FAhSA1TBMqHiHA==
+        rw_gen_password:
+          value: m/8vmaHXAohwKDFq7+96mSbldimiOiXOpLcPWbUve18wbW1sAtAG1S0ibTNQCH5KJg5HMPrvIdY=
+        rw_gen_password_default:
+          default: fkyvFBvefjZwAcYOsh9R1CiR20OKfP1_TF7QgqeH
+          value: Z4unEvZ6FAhSA1TBMqHiHA==
+        swimlane_security_context:
+          default: |
+            fsGroup: 2000
+            runAsGroup: 2000
+            runAsUser: 2000

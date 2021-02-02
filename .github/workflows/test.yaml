@@ -4,7 +4,7 @@ on:
     branches:
       - kgrid
 jobs:
-  goreleaser:
+  kgrid:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -33,4 +33,14 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       run: |
-        kubectl grid version
+        kubectl grid create --from-yaml ./grid.yaml --app ./app.yaml
+
+    - name: Delete cluster
+      shell: bash
+      env:
+        SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
+        SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      run: |
+        kubectl grid delete --from-yaml ./grid.yaml

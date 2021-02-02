@@ -1,0 +1,36 @@
+name: test
+on:
+  push:
+    branches:
+      - kgrid
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Unshallow
+      run: git fetch --prune --unshallow
+
+    - name: Install kubectl-grid
+      shell: bash
+      run: |
+        curl -L -o /usr/local/bin/kubectl https://dl.k8s.io/release/v1.20.0/bin/linux/amd64/kubectl
+
+    - name: Install kubectl-grid
+      shell: bash
+      run: |
+        curl -L -o kubectl-grid.tar.gz https://github.com/replicatedhq/kubectl-grid/releases/download/v0.0.1/kubectl-grid_linux_amd64.tar.gz
+        tar zxvf kubectl-grid.tar.gz
+        mv kubectl-grid /usr/local/bin
+
+    - name: Run test
+      shell: bash
+      env:
+        SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
+        SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      run: |
+        kubectl grid version

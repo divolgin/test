@@ -13,7 +13,7 @@ jobs:
     - name: Unshallow
       run: git fetch --prune --unshallow
 
-    - name: Install kubectl-grid
+    - name: Install kubectl
       shell: bash
       run: |
         sudo curl -L -o /usr/local/bin/kubectl https://dl.k8s.io/release/v1.20.0/bin/linux/amd64/kubectl

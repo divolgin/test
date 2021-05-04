@@ -1,0 +1,12 @@
+---
+version: 2
+updates:
+
+  ## Dockerfiles
+
+  - package-ecosystem: "docker"
+    directory: "/deploy"
+    schedule:
+      interval: "daily"
+      time: "08:15"
+      timezone: "America/Los_Angeles"

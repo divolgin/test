@@ -1,5 +1,5 @@
 ---
-version: 2
+version: 1
 updates:
 
   ## Dockerfiles
@@ -8,5 +8,5 @@ updates:
     directory: "/deploy"
     schedule:
       interval: "daily"
-      time: "08:15"
+      time: "08:30"
       timezone: "America/Los_Angeles"

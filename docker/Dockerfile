@@ -1,3 +1,3 @@
-FROM postgres:9.5
+FROM postgres:13.2
 
-FROM postgres:10.16
+FROM postgres:13.2

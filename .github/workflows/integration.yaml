@@ -1,0 +1,108 @@
+name: test
+on:
+  push:
+    branches:
+      - integration
+jobs:
+  all:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        k8s_version: [v1.20.14-k3s2,v1.21.8-k3s2,v1.22.5-k3s2,v1.23.3-k3s1]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: main
+          repository: replicatedhq/kots
+
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.17.4'
+
+      - name: setup env
+        run: |
+          echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - id: go-cache-paths
+        run: |
+          echo "::set-output name=go-build::$(go env GOCACHE)"
+          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+
+      - name: make kots
+        run: |
+          set -x
+          ls -l
+          pwd
+          make kots
+
+      - uses: replicatedhq/action-k3s@main
+        id: k3s
+        with:
+          version: ${{ matrix.k8s_version }}
+          ports: '30000:30000'
+
+
+      - name: minimal rbac override on command line
+        env:
+          APP_SLUG: minimal-rbac
+          APP_VERSION_LABEL: "0.0.1"
+          LICENSE: YXBpVmVyc2lvbjoga290cy5pby92MWJldGExCmtpbmQ6IExpY2Vuc2UKbWV0YWRhdGE6CiAgbmFtZTogYWlyZ2Fwb25naXRvcHNvbmV4cGlyZW5ldmVydHlwZWRldgpzcGVjOgogIGFwcFNsdWc6IG1pbmltYWwtcmJhYwogIGNoYW5uZWxJRDogMWY2aVRkdHhmbjBOa0hxQm9FZVJQOFYzOGljCiAgY2hhbm5lbE5hbWU6IEF1dG9tYXRlZAogIGN1c3RvbWVyTmFtZTogYWlyZ2FwPW9uLCBnaXRvcHM9b24sIGV4cGlyZT1uZXZlciwgdHlwZT1kZXYKICBlbmRwb2ludDogaHR0cHM6Ly9yZXBsaWNhdGVkLmFwcAogIGVudGl0bGVtZW50czoKICAgIGV4cGlyZXNfYXQ6CiAgICAgIGRlc2NyaXB0aW9uOiBMaWNlbnNlIEV4cGlyYXRpb24KICAgICAgdGl0bGU6IEV4cGlyYXRpb24KICAgICAgdmFsdWU6ICIiCiAgICAgIHZhbHVlVHlwZTogU3RyaW5nCiAgaXNBaXJnYXBTdXBwb3J0ZWQ6IHRydWUKICBpc0dpdE9wc1N1cHBvcnRlZDogdHJ1ZQogIGlzTmV3S290c1VpRW5hYmxlZDogdHJ1ZQogIGlzU2VtdmVyUmVxdWlyZWQ6IHRydWUKICBpc1NuYXBzaG90U3VwcG9ydGVkOiB0cnVlCiAgbGljZW5zZUlEOiAxZmJNRU50aEVqTldQVWoybTBIQUtSelQwSXUKICBsaWNlbnNlU2VxdWVuY2U6IDQKICBsaWNlbnNlVHlwZTogZGV2CiAgc2lnbmF0dXJlOiBleUpzYVdObGJuTmxSR0YwWVNJNkltVjVTbWhqUjJ4WFdsaEtlbUZYT1hWSmFtOXBZVEk1TUdONU5YQmllVGt5VFZkS2JHUkhSWGhKYVhkcFlUSnNkVnBEU1RaSmEzaHdXVEpXZFdNeVZXbE1RMHAwV2xoU2FGcEhSakJaVTBrMlpYbEtkVmxYTVd4SmFtOXBXVmRzZVZveVJuZGlNalZ1WVZoU2RtTklUblppYlZZMFkwZHNlVnBYTld4a2JWWjVaRWhzZDFwWFVteGthVW81VEVOS2VtTkhWbXBKYW5BM1NXMTRjRmt5Vm5Wak1sWktVa05KTmtscVJtMVphekZHVkc1U2IxSlhjRTlXTVVKV1lXcEtkRTFGYUVKVE1VbzJWa1JDU21SVFNYTkpiWGh3V1RKV2RXTXlWbFZsV0VKc1NXcHZhVnBIVmpKSmFYZHBXVE5XZW1SSE9YUmFXRXBQV1ZjeGJFbHFiMmxaVjJ4NVdqSkdkMUJYT1hWTVEwSnVZVmhTZG1OSVRUbGlNalJ6U1VkV05HTkhiSGxhVkRGMVdsaGFiR05wZDJka1NHeDNXbFF4YTFwWVdXbE1RMHBvWTBoQ1ZHSklWbTVKYW05cFlsZHNkV0ZYTVdoaVF6RjVXVzFHYWtscGQybFpNbWhvWW0wMWJHSkZiRVZKYW05cFRWZFpNbUZXVW10a1NHaHRZbXBDVDJFd2FIaFJiVGxHV2xaS1VVOUdXWHBQUjJ4cVNXbDNhVmt5YUdoaWJUVnNZa1UxYUdKWFZXbFBhVXBDWkZoU2RtSlhSakJhVjFGcFRFTktjMkZYVG14aWJrNXNWVEpXZUdSWFZuVlpNbFZwVDJwUmMwbHRWblZhU0VKMllWYzFNRWxxYjJsaFNGSXdZMGhOTmt4NU9YbGFXRUp6WVZkT2FHUkhWbXRNYlVaM1kwTkpjMGx0Vm5Wa1Iyd3dZa2RXZEZwWE5UQmplVWsyWlhsS2JHVklRbkJqYlZaNldESkdNRWxxY0RkSmJsSndaRWQ0YkVscWIybFNXR2gzWVZoS2FHUkhiSFppYVVselNXMVNiR015VG5saFdFSXdZVmM1ZFVscWIybFVSMnhxV2xjMWVscFRRa1psU0VKd1kyMUdNR0ZYT1hWSmFYZHBaRzFHYzJSWFZXbFBhVWxwVEVOS01sbFhlREZhVmxJMVkwZFZhVTlwU2xSa1NFcHdZbTFqYVdaWU1ITkpiV3g2VVZkc2VWb3lSbmRWTTFaM1kwYzVlV1JIVm10SmFuQXdZMjVXYkV4RFNuQmpNR1J3WkVVNWQyTXhUakZqU0VKMlkyNVNiRnBEU1Raa1NFb3hXbE4zYVdGWVRsUmliVVozWXpKb2RtUkdUakZqU0VKMlkyNVNiRnBEU1Raa1NFb3hXbE4zYVdGWVRrOWFXR1JNWWpOU2VsWlhiRVppYlVacFlrZFdhMGxxY0RCamJsWnNURU5LY0dNeFRteGlXRnBzWTJ4S2JHTllWbkJqYlZaclNXcHdNR051Vm14bVdEQTlJaXdpYVc1dVpYSlRhV2R1WVhSMWNtVWlPaUpsZVVwellWZE9iR0p1VG14Vk1teHVZbTFHTUdSWVNteEphbTlwVmxab1EySkdiRFJVYTJ3eVkzbHpNRnBYYUdsaGJsWnFaREZ3ZVZSSFVsWlNiRkUxWWpKUmVWTlRkRmhpUlU1cVVtMU9RMDFYYUVOUk1YQndUV3hDU2xwc1FubE9TRkpNWTBoR2NGWkhUa2xqUkVKNVVteEtjRkV5Y0d0aU1qRlVWR3RaTlZscWJHaGtWRkoyVlRGa1JGWlhPVE5aZVhSTVdtazVSV051VG05UmJHTXhWbTVGY21WV1drUlVSVFZLVVROQ1JtRlZhRkJWYlZaVFRrVnNibUZyVWtsTlZ6Vk1ZMnRrYzFVelRraGtiV1JzVW5sMFRsSkhkSEpoTUhSQ1RrVkdNR1ZVYkhSaFNHUlJXVEpHV2xwVGRGTlNSbFpXVGtNNU0ySkdVbGxUYVhSR1ZURldTRTR4WkdoVVEzUkVUV3QzZDFsNlNscGFWbXhhWWxkYWQyRkhiRkJaTWxaNlVtcFNUMDVHVWt0WmJtZHlaREpaTW1WV2NGaFRNbmhOVTBoQ2RWWlZNREJTTVZwMlpGZFdVbGxVYTNoVE0yOTJUbXhrUlZaR1NuTk9lbHBXV21wb1RsWkVXbXhhTWpVeVRVWkplVmxZVWpKTlZGVjJZVEpTTmsxSVRUQlpWbFpUWkc1R2RVdDZVblZXYTNCR1RsZHJkMkZJY0c1aVdHUktZbTVrV1ZWRlNsWldiVW94Vlcxb1Zrc3hVbXBrZWxaM1RsYzFSbEZwZEZoT1dFSkVUa1JHUWxOSFdUQmthMVpaVGpOV1ZsSnNWazFWUkVKdlpXczFXRkpYUm0xTk1GSXpVRlF3YVV4RFNuZGtWMHB6WVZkT1RGcFlhMmxQYVVsMFRGTXdkRXhWU2taU01HeFBTVVpDVmxGcmVFcFJlVUpNVWxacmRFeFRNSFJNVm5oMVZGVnNTbEZyYkhGUlZUVkRXakowZUdGSGRIQlNlbXd6VFVWS1FsVlZWa2RSVlVaUVVUQkdVazlGUms1VFZXeERVVEprVEZFd1JsSlNWVVkwVkcwNWFXSlZkRUpSTW1oQ1VUQTFSVlpZUlhka01XUkhXbXg0ZFZVeVVqWlhWV3h1VVZab1RGTkhhRXBPTW5SclN6SmFSVll6UmxObFYxWjJZbFUwTUZNd2MzWmhNSEJ2Wkd0a1JWTXhTbHBaTW5oU1RrUmtRbGxZVm10WmJsWXhVVlZ3U2s5VE9IbFphMGt3VmtSQ2JtUnNlSFZrTUhjMVVteENSRXd4Vm14UFJrcHVWRWhrVW1Wc1FrVmlWRVpzWVZkV1JrMXJPWFZOTTFaM1VtMHhhVkZZUm1oVVJtaENUMGhqZDFWcWJFSmFiRnByVVZaR2NXUjZZekZNTWxaclpWVktjR1JyVFhsYU1YaDFWRWR3V2xFd01WVlVNRGxLVVRKT1UxTkdSbWhUUkd4U1dURm5NMlJzV1ROalZFMTNZMVJuZDJOdGF6TlVSVlpSVGtSV2RrNUZUVEpWTTFGNlVrUnNWV0l4VFhaaFZtUnhXVzVHZFdWV2FGWmxTRzl5WlVaNGRVd3dUbXBUVlZKdVRqQXhSbFV6U25aa1JFSkpZekZzVVZveVZrZGlXRTU0UzNwYWVscFZjSEpVYlRGTlducFdNbUZWY0RKTlZuQk5VbXBzVTJOSFJqQk9Vemx4V1ZWb2Fsa3hXWGxUVnpsM1lrWndRbU5XZUhWWk0wSjRWMnhaTTJKc1ZrSk9NMFpYWWpOa2VFMUdiRkZrTWtwTVVucFdkazFyV25CaldGcEdXakE1UmxWSVJsQlpXR3hLVVcxR2NGSXdORFJrTUc5M1pGUkdSbGRxVm5CWmF6VnJZbGRzTTFKWVVsRlpWbmgxVVROa1NsSkZSbEpSVlVwallta3dkRXhUTUhSU1ZUVkZTVVpDVmxGcmVFcFJlVUpNVWxacmRFeFRNSFJNVm5oMVNXbDNhV0V5VmpWVk1teHVZbTFHTUdSWVNteEphbTlwV2xoc1MyVnRSbGhhU0ZaYVYwWkplRmt5TVZaaFZUbHdVMjVLYUZKWGFGbFZha1pIVW14U1ZWWnVXazlOTVVvMFZtMTBTMUpzVmtaVGFrSlBVbFJzVTFkcVNuTmpNa28yVW14T1RsWllRbHBaZWtKWFlUSkdWV0ZHV2xCWFJWcG9WRzAxUzFKVk5VWk9WbHBzVmxaS2NWbHRlRVpOUjBaSFkwWldhVkl3V25CVmFrcExaV3hLTm1GNlVsSk5iRXAxVlRCb2IxZHRWa2hVV0VwYVZsaFNiMXBYZERSbGJWSkdaVVU1YUZaWGRETlVWekZ2WW14R1ZFOUlhRk5sYTBZeldWWmplRlpzVGxsWGEwNXNWbXhzTTFSVVFsTldiRmw0VVdwV1UwMVdTbEJWYkZKRFYxWldkV0ZITVZSaGExVjNWMVJLTkUxV1RuVmllbEpYWWxoU1dWWlZhRWRTYlU1MFlrY3hhRlpIVFhoVU1HaFRWbXMxV0dKR2FGcGhiRXAyVldwR1dtUnNaSEpoUms1WVlrVkZkMXBXWkhKbGJHUlhWVzE0YW1WWVVrdFdiVFZ6VjJ4V1NWUnVWbFJoVkdnMlYycEJlRlZHWkVaT1dFWnJWa1ZWTUZkc1ZsZGtWazVYVVd4c1QxSkZiekJXYTFKSFdWWnNjMXBJWkZwTk1VVjNXa1ZXTUdNeVZuVmlSemxPVFVSQmVGbFVSbk5rVm14WVZsaGtXbUpZVW5aV01WSnJVekZzYzFWVVVtdFNiVkpNVmxaa2ExVkdSbGhQVlVwcFZqTm9VbHBFVG1wa01XeFlVMnBDVkZKWGREUldSRXBhVFVVd2VsWnFVbGRpUlhCYVdsZDBNR0ZHVW5KU2JrWlBZV3R3UmxsdE1EVmxSMHBGVjJwV1RtSlhhSFJYVmxwWFpESkdSbE5xUm10U1ZWcERWVzEwYTFVd01YSmpSVEZXVmxWd1VWWnJWakJaVjBwVlVteEthRTB5ZUhOVVZsWjNWREpXUjFOdVFtRmlhelZoVkVSSk5VNXNjRmhXYkdSVVpXdHdSVll4YUZOaGJFWnlWbTVrVlZkSE9UWlZha0pMVGxaV1ZtRkdjR2xXVjFKdlUzcEdUMVpYVFhkU1ZHeFJWVEJzZWxOWE1XdGpNa2w1VTIxb2FWSllVbk5hVmxaellUQnNjV0l5YkZwaVZrcHpWMnhTVmsxck5WVlhXR1JhVFd4d2NGUnJVazloYXpsWVUxaHNVRkl3Y0hSVU1WSnZZa1pzV0ZSdGFHRmlWVlY1Vkd0U1dtRlhXbEpRVkRCcFpsRTlQU0o5Cg==
+        run: |
+          set +e
+          set -x
+          ./bin/kots \
+            install $APP_SLUG/automated \
+            --app-version-label $APP_VERSION_LABEL \
+            --no-port-forward \
+            --namespace $APP_SLUG \
+            --shared-password password \
+            --kotsadm-registry ttl.sh/divolgin \
+            --kotsadm-tag 12h \
+            --use-minimal-rbac
+
+          if kubectl get roles -n $APP_SLUG | grep -q kotsadm; then
+            echo "Found kotsadm role in ${APP_SLUG}"
+          else
+            echo "No kotsadm role found in appication namespace"
+            exit -1
+          fi
+
+          if kubectl get clusterroles | grep -q kotsadm; then
+            echo "Found kotsadm cluster roles in minimal RBAC install"
+            exit -1
+          fi
+
+          kubectl delete ns $APP_SLUG || true
+
+
+      - name: no minimal rbac overrdie on command line
+        env:
+          APP_SLUG: minimal-rbac
+          APP_VERSION_LABEL: "0.0.1"
+        run: |
+          set +e
+          set -x
+          ./bin/kots \
+            install $APP_SLUG/automated \
+            --app-version-label $APP_VERSION_LABEL \
+            --no-port-forward \
+            --namespace $APP_SLUG \
+            --shared-password password \
+            --kotsadm-registry ttl.sh/divolgin \
+            --kotsadm-tag 12h
+
+          if kubectl get roles -n $APP_SLUG | grep -q kotsadm; then
+            echo "Found kotsadm role in cluster scoped install"
+            exit -1
+          fi
+
+          if kubectl get clusterroles | grep -q kotsadm; then
+            echo "Found kotsadm cluster role in cluster scoped install"
+          else
+            echo "No kotsadm cluster role in cluster scoped install"
+            exit -1
+          fi
+
+          kubectl delete ns $APP_SLUG || true

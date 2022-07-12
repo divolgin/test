@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    {{- include "admin-console.labels" . | nindent 4 }}
+  name: {{ include "admin-console.fullname" . }}
+spec:
+  ports:
+  - name: http
+    port: 3000
+    targetPort: 3000
+  selector:
+    app: kotsadm
+  type: {{ .Values.service.type }}
+status:
+  loadBalancer: {}

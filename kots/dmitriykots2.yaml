@@ -1,0 +1,168 @@
+apiVersion: v1
+data:
+  ENV_VAR_1: fake
+  ENV_VAR_2: faker
+kind: ConfigMap
+metadata:
+  annotations:
+    kots.io/app-slug: dmitriykots2
+  labels:
+    kots.io/app-slug: dmitriykots2
+    kots.io/backup: velero
+  name: example-config
+---
+apiVersion: v1
+data:
+  fluent-bit.conf: |2-
+
+    [INPUT]
+        Name              tail
+        Tag               fwd.backend_master.${K8S_NODE_NAME}
+        Path              /var/log/forward/backend_master
+        DB                /var/log/forward/flb_backend_master.db
+        DB.journal_mode   OFF
+        Mem_Buf_Limit     5MB
+        Skip_Long_Lines   On
+
+    [OUTPUT]
+        Name              forward
+        Match             *
+        Host              fwd-log-aggregator-0
+        Port              24224
+
+    [OUTPUT]
+        Name              forward
+        Match             *
+        Host              fwd-log-aggregator-1
+        Port              24224
+kind: ConfigMap
+metadata:
+  annotations:
+    kots.io/app-slug: dmitriykots2
+  labels:
+    app.kubernetes.io/name: fwd-backend-master
+    kots.io/app-slug: dmitriykots2
+    kots.io/backup: velero
+  name: fwd-backend-master-fluent-bit-config
+---
+apiVersion: v1
+data:
+  .dockerconfigjson: eyJhdXRocyI6eyJwcm94eS5yZXBsaWNhdGVkLmNvbSI6eyJhdXRoIjoiTWpWSmRWY3lXRmRZU2xCdVFURnNPWGd5YVhsV05uWXpXV3Q1T2pJMVNYVlhNbGhYV0VwUWJrRXhiRGw0TW1sNVZqWjJNMWxyZVE9PSJ9LCJyZWdpc3RyeS5yZXBsaWNhdGVkLmNvbSI6eyJhdXRoIjoiTWpWSmRWY3lXRmRZU2xCdVFURnNPWGd5YVhsV05uWXpXV3Q1T2pJMVNYVlhNbGhYV0VwUWJrRXhiRGw0TW1sNVZqWjJNMWxyZVE9PSJ9fX0=
+kind: Secret
+metadata:
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-9999"
+    kots.io/app-slug: dmitriykots2
+  creationTimestamp: null
+  labels:
+    kots.io/app-slug: dmitriykots2
+    kots.io/backup: velero
+  name: dmitriykots2-registry
+  namespace: gitops
+type: kubernetes.io/dockerconfigjson
+---
+apiVersion: v1
+data:
+  .dockerconfigjson: eyJhdXRocyI6eyJwcm94eS5yZXBsaWNhdGVkLmNvbSI6eyJhdXRoIjoiTWpWSmRWY3lXRmRZU2xCdVFURnNPWGd5YVhsV05uWXpXV3Q1T2pJMVNYVlhNbGhYV0VwUWJrRXhiRGw0TW1sNVZqWjJNMWxyZVE9PSJ9LCJyZWdpc3RyeS5yZXBsaWNhdGVkLmNvbSI6eyJhdXRoIjoiTWpWSmRWY3lXRmRZU2xCdVFURnNPWGd5YVhsV05uWXpXV3Q1T2pJMVNYVlhNbGhYV0VwUWJrRXhiRGw0TW1sNVZqWjJNMWxyZVE9PSJ9fX0=
+kind: Secret
+metadata:
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-9999"
+    kots.io/app-slug: dmitriykots2
+  creationTimestamp: null
+  labels:
+    kots.io/app-slug: dmitriykots2
+    kots.io/backup: velero
+  name: kotsadm-replicated-registry
+  namespace: gitops
+type: kubernetes.io/dockerconfigjson
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kots.io/app-slug: dmitriykots2
+  labels:
+    app: example
+    component: nginx
+    kots.io/app-slug: dmitriykots2
+    kots.io/backup: velero
+  name: example-nginx
+spec:
+  ports:
+  - port: 80
+  selector:
+    app: example
+    component: nginx
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  annotations:
+    kots.io/app-slug: dmitriykots2
+  labels:
+    app.kubernetes.io/name: fwd-precrypt
+    kots.io/app-slug: dmitriykots2
+    kots.io/backup: velero
+  name: fwd-precrypt
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: fwd-precrypt
+  template:
+    metadata:
+      annotations:
+        kots.io/app-slug: dmitriykots2
+      labels:
+        app.kubernetes.io/name: fwd-precrypt
+        build: d3738761facbe850d4a043f63ce7de64c62ad5c1
+        kots.io/app-slug: dmitriykots2
+        kots.io/backup: velero
+    spec:
+      containers:
+      - args:
+        - "9999999"
+        command:
+        - sleep
+        image: registry.replicated.com/dmitriykots2/alpine:3.4-part2
+        name: precrypt
+      imagePullSecrets:
+      - name: dmitriykots2-registry
+      serviceAccountName: fwd-precrypt-user
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  annotations:
+    kots.io/app-slug: dmitriykots2
+  labels:
+    app.kubernetes.io/name: local-volume-provisioner
+    kots.io/app-slug: dmitriykots2
+    kots.io/backup: velero
+  name: local-volume-provisioner
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: local-volume-provisioner
+  template:
+    metadata:
+      annotations:
+        kots.io/app-slug: dmitriykots2
+      labels:
+        app.kubernetes.io/name: local-volume-provisioner
+        kots.io/app-slug: dmitriykots2
+        kots.io/backup: velero
+    spec:
+      containers:
+      - args:
+        - "9999999"
+        command:
+        - sleep
+        image: registry.replicated.com/dmitriykots2/alpine:3.15-part2
+        name: provisioner
+      imagePullSecrets:
+      - name: dmitriykots2-registry
+      serviceAccountName: local-storage-admin

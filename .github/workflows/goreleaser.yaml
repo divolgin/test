@@ -1,0 +1,75 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+    branches:
+      - master
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-20.04
+    # needs: [build-web]
+    steps:
+    - uses: actions/setup-go@v2
+      with:
+        go-version: '^1.19.2'
+
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        repository: replicatedhq/kots
+
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        path: local
+
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-goreleaser-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-goreleaser-
+    - name: Unshallow
+      run: git fetch --prune --unshallow
+    - run: sudo apt-get update -y
+    - run: sudo apt-get -qq -y install gnupg2 libdevmapper-dev libgpgme-dev libc6-dev-i386 btrfs-progs libbtrfs-dev pkg-config
+    - name: set previous release tag for goreleaser
+      run: |
+        export TAG=$(curl --silent "https://api.github.com/repos/replicatedhq/kots/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")')
+        echo "GORELEASER_PREVIOUS_TAG=${TAG}" >> $GITHUB_ENV
+    - name: set previous release tag for goreleaser
+      if: github.ref_type == 'branch'
+      run: |
+        echo "GORELEASER_CURRENT_TAG=v0.0.0-nightly" >> $GITHUB_ENV
+    - uses: sigstore/cosign-installer@main
+      with:
+        cosign-release: 'v1.2.1'
+    - name: Get Cosign Key
+      run: |
+        echo $COSIGN_KEY | base64 -d > ./cosign.key
+      env:
+        COSIGN_KEY: ${{secrets.COSIGN_KEY}}
+    # - name: Download web artifact
+    #   uses: actions/download-artifact@v2
+    #   with:
+    #     name: web
+    #     path: ./web/dist
+    # - name: Generate SBOM
+    #   run: |
+    #     set -x
+    #     make sbom
+    #   env:
+    #     COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+    - name: Run GoReleaser
+      uses: goreleaser/goreleaser-action@v2
+      with:
+        version: "v1.2.5"
+        args: release --rm-dist --config local/kots/.goreleaser.yaml --skip-validate --skip-sign --skip-sbom
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

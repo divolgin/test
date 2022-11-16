@@ -1,0 +1,47 @@
+project_name: kots
+release:
+  github:
+    owner: divolgin
+    name: test
+  prerelease: "true"
+builds:
+  - id: kots
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=0
+      - GO111MODULE=on
+    main: cmd/kots/main.go
+    ldflags: -s -w
+      -X github.com/replicatedhq/kots/pkg/buildversion.version={{.Version}}
+      -X github.com/replicatedhq/kots/pkg/buildversion.gitSHA={{.FullCommit}}
+      -X github.com/replicatedhq/kots/pkg/buildversion.buildTime={{.Date}}
+    flags: -tags netgo -tags containers_image_ostree_stub -tags exclude_graphdriver_devicemapper -tags exclude_graphdriver_btrfs -tags containers_image_openpgp -installsuffix netgo
+    binary: kots
+    hooks: {}
+
+universal_binaries:
+  - replace: true
+
+archives:
+  - id: kots
+    builds:
+      - kots
+    format: tar.gz
+    name_template: '{{ .Binary }}_{{ .Os }}_{{ .Arch }}'
+    # files:
+    #   - licence*
+    #   - LICENCE*
+    #   - license*
+    #   - LICENSE*
+    #   - readme*
+    #   - README*
+    #   - changelog*
+    #   - CHANGELOG*
+    #   - sbom/kots-sbom.tgz
+    #   - sbom/kots-sbom.tgz.sig
+    #   - sbom/key.pub

@@ -12,41 +12,57 @@ jobs:
   wait-for-all-to-complete: # THIS
     runs-on: ubuntu-22.04
     steps:
+      # - id: wait-bash
+      #   env:
+      #     GH_TOKEN: ${{ github.token }}
+      #   shell: bash
+      #   run: |
+      #     set -x
+      #     set -e
+      #     set -o pipefail
+      #     echo "Run ID: ${{ github.run_id }}"
+      #     NUM_RETRIES=0
+      #     # 120 * 5 = 600 seconds = 10 minutes
+      #     until [ $NUM_RETRIES -eq 120 ]; do
+      #       let NUM_RETRIES=NUM_RETRIES+1;
+      #       echo "NUM_RETRIES=${NUM_RETRIES}";
+
+      #       # List workflows and find all the release-production ones, excluding the currently running one.
+      #       # Wait until all of them are in the "completed" state.  "conclusion" value is not relevant here.
+      #       # gh api \
+      #       #     -H "Accept: application/vnd.github+json" \
+      #       #     -H "X-GitHub-Api-Version: 2022-11-28" \
+      #       #     /repos/divolgin/test/actions/runs > runs.json;
+      #       # cat runs.json | jq -c '.workflow_runs[] | select(.id != ${{ github.run_id }}) | select(.path | endswith("/release-production.yml")).status'
+      #       # cat runs.json | jq -c '.workflow_runs[] | select(.id != ${{ github.run_id }}) | select(.path | endswith("/release-production.yml")).status' | { grep -v completed || true; }
+      #       # cat runs.json | jq -c '.workflow_runs[] | select(.id != ${{ github.run_id }}) | select(.path | endswith("/release-production.yml")).status' | { grep -v completed || true; } | wc -l
+      #       WORKFLOWS_NOT_COMPLETED=$(gh api \
+      #           -H "Accept: application/vnd.github+json" \
+      #           -H "X-GitHub-Api-Version: 2022-11-28" \
+      #           /repos/divolgin/test/actions/runs |
+      #         jq -c '.workflow_runs[] | select(.id != ${{ github.run_id }}) | select(.path | endswith("/release-production.yml")).status' |
+      #         { grep -v completed || true; } |
+      #         wc -l);
+      #       # WORKFLOWS_NOT_COMPLETED=0
+
+      #       echo "Got WORKFLOWS_NOT_COMPLETED=${WORKFLOWS_NOT_COMPLETED}"
+      #       if [ "$WORKFLOWS_NOT_COMPLETED" -eq "0" ]; then
+      #         echo "All release-production workflows are completed."
+      #         exit 0;
+      #       fi
+
+      #       sleep 5;
+      #     done
+
+      #     echo "Timed out waiting for all release-production workflows to complete."
+      #     exit 1
+
       - id: wait
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -e
-          set -o pipefail
-          echo "Run ID: ${{ github.run_id }}"
-          NUM_RETRIES=0
-          # 120 * 5 = 600 seconds = 10 minutes
-          until [ $NUM_RETRIES -eq 120 ]; do
-            let NUM_RETRIES=NUM_RETRIES+1;
-            echo "NUM_RETRIES=${NUM_RETRIES}";
-
-            # List workflows and find all the release-production ones, excluding the currently running one.
-            # Wait until all of them are in the "completed" state.  "conclusion" value is not relevant here.
-            WORKFLOWS_NOT_COMPLETED=$(gh api \
-                -H "Accept: application/vnd.github+json" \
-                -H "X-GitHub-Api-Version: 2022-11-28" \
-                /repos/divolgin/test/actions/runs |
-              jq -c '.workflow_runs[] | select(.id != ${{ github.run_id }}) | select(.path | endswith("/release-production.yml")).status' |
-              { grep -v completed || true; } |
-              wc -l);
-
-            echo "Got WORKFLOWS_NOT_COMPLETED=${WORKFLOWS_NOT_COMPLETED}"
-            if [ "$WORKFLOWS_NOT_COMPLETED" -eq "0" ]; then
-              echo "All release-production workflows are completed."
-              exit 0;
-            fi
-
-            sleep 5;
-          done
-
-          echo "Timed out waiting for all release-production workflows to complete."
-          exit 1
+        uses: ./github/actions/gate-production-release-workflow
+        with:
+          gh_token: ${{ github.token }}
+          ref: ${{ inputs.ref }}
+          run_id: ${{ github.run_id }}
 
   get-previous-sha:
     runs-on: ubuntu-22.04

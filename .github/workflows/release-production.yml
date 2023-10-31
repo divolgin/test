@@ -12,6 +12,8 @@ jobs:
   wait-for-all-to-complete: # THIS
     runs-on: ubuntu-22.04
     steps:
+      - uses: actions/checkout@v3
+
       # - id: wait-bash
       #   env:
       #     GH_TOKEN: ${{ github.token }}

@@ -58,7 +58,7 @@ jobs:
       #     exit 1
 
       - id: wait
-        uses: ./github/actions/gate-production-release-workflow
+        uses: ./.github/actions/gate-production-release-workflow
         with:
           gh_token: ${{ github.token }}
           ref: ${{ inputs.ref }}

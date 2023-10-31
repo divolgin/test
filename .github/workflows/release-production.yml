@@ -18,7 +18,7 @@ jobs:
         run: |
           NUM_RETRIES=0
           # 60 * 10 = 600 seconds = 10 minutes
-          until [ $NEXT_WAIT_TIME -eq 60 ]; do
+          until [ $NUM_RETRIES -eq 60 ]; do
             ((NUM_RETRIES++))
 
             # List workflows and find all the release-production ones, excluding the currently running one.

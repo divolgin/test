@@ -1,0 +1,208 @@
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "The ref to checkout (branch, tag, or SHA)"
+        required: true
+        default: "main"
+
+name: "! Production release"
+
+jobs:
+  get-previous-sha:
+    runs-on: ubuntu-22.04
+    outputs:
+      sha: ${{ steps.get-latest-release.outputs.sha }}
+      tag_name: ${{ steps.get-latest-release.outputs.tag_name }}
+    steps:
+      - id: get-latest-release
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const {
+              data: { tag_name: previous_tag_name, target_commitish: old_sha },
+            } = await github.rest.repos.getLatestRelease({
+              ...context.repo,
+            });
+            core.setOutput("sha", old_sha);
+            core.setOutput("tag_name", previous_tag_name);
+
+  get-sha:
+    runs-on: ubuntu-22.04
+    outputs:
+      sha: ${{ steps.rev-parse.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - id: rev-parse
+        run: echo "sha=$(git rev-parse ${{ inputs.ref }})" >> "$GITHUB_OUTPUT"
+
+  generate-tag:
+    runs-on: ubuntu-22.04
+    needs:
+      - get-previous-sha
+    outputs:
+      tag: ${{ steps.generate_tag.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Get current date
+        id: date
+        run: echo "date_today=$(date +'%Y.%m.%d')" >> "$GITHUB_OUTPUT"
+      - name: Generate tag
+        id: generate_tag
+        uses: actions/github-script@v6
+        env:
+          DATE_TODAY: ${{ steps.date.outputs.date_today }}
+          PREVIOUS_TAG_NAME: ${{ needs.get-previous-sha.outputs.tag_name }}
+        with:
+          script: |
+            let tag_name = "v" + process.env.DATE_TODAY + "-0";
+
+            core.debug(
+              `call: github.rest.repos.getLatestRelease(${JSON.stringify({
+                ...context.repo,
+              })})`
+            );
+            const previous_tag_name = process.env.PREVIOUS_TAG_NAME;
+
+            // increment tag name if it has a '-#' suffix
+            const previousTagNameSplitIndex = previous_tag_name.lastIndexOf("-");
+            if (
+              // if the previous tag name's date is the same as the new tag name's date - ex: v2023.10.05-3 and v2023.10.05-0
+              previous_tag_name.split("-")[0] === tag_name.split("-")[0] &&
+              // and if the previous tag name has a '-#' suffix - ex: v2023.10.05-0
+              previousTagNameSplitIndex !== -1
+            ) {
+              // increment the tag name's '-#' suffix - ex: v2023.10.05-3 -> v2023.10.05-4
+              const newTagNumber = parseInt(
+                previous_tag_name.substring(previousTagNameSplitIndex + 1)
+              );
+
+              tag_name =
+                "v" +
+                process.env.DATE_TODAY +
+                "-" +
+                (!isNaN(newTagNumber) ? newTagNumber + 1 : 0);
+            }
+
+            core.setOutput("tag", tag_name);
+  
+  push-tag:
+    runs-on: ubuntu-20.04
+    needs:
+      - get-sha
+      - generate-tag
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.get-sha.outputs.sha }}
+      - name: Push tag
+        env:
+          GIT_TAG: ${{ needs.generate-tag.outputs.tag }}
+        run: |
+          GIT_COMMITTER_DATE="$(git show --format=%aD | head -1)" \
+          git tag "$GIT_TAG"
+          git push origin "$GIT_TAG"
+
+  annotate-diff:
+    runs-on: ubuntu-22.04
+    needs:
+      - get-sha
+      - get-previous-sha
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.get-sha.outputs.sha }}
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            const old_sha = "${{ needs.get-previous-sha.outputs.sha }}"
+            const sha = "${{ needs.get-sha.outputs.sha }}";
+
+            core.notice(
+              `Diff since last release: ${context.serverUrl}/${context.repo.owner}/${
+                context.repo.repo
+              }/compare/${old_sha.substring(0, 7)}...${sha.substring(0, 7)}`
+            );
+  
+  check-checks:
+    runs-on: ubuntu-22.04
+    needs:
+      - get-sha
+      - push-tag
+      - annotate-diff
+    steps:
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            core.notice(
+              `Jobs related to this SHA: ${context.serverUrl}/${context.repo.owner}/${
+                context.repo.repo
+              }/actions?query=branch%3Amain+head_sha%3A${{ needs.get-sha.outputs.sha }}`
+            );
+            const check_runs = await github.paginate(github.rest.checks.listForRef, {
+              ...context.repo,
+              ref: "${{ needs.get-sha.outputs.sha }}",
+              per_page: 100,
+            });
+            const failed = check_runs.filter(
+              ({ status, conclusion, name }) =>
+                !["check-checks", "verify-contract"].includes(name) &&
+                (status !== "completed" || !["success", "skipped"].includes(conclusion))
+            );
+            if (failed.length > 0) {
+              core.setFailed(
+                `There are failed or incomplete checks: ${failed
+                  .map(({ name }) => name)
+                  .join(", ")}`
+              );
+            }
+
+  wait-for-deploy:
+    needs:
+      - check-checks
+    runs-on: ubuntu-22.04
+    steps:
+      - id: release
+        run: |
+          echo "wait for deploy ${{ inputs.ref }}"
+
+  test-prod:
+    needs:
+      - wait-for-deploy
+    runs-on: ubuntu-22.04
+    steps:
+      - id: release
+        run: |
+          echo "run tests ${{ inputs.ref }}"
+
+  success-notification:
+    if: success()
+    needs: 
+      - create-release
+      - test-prod
+    runs-on: ubuntu-22.04
+    steps:
+      - id: sha
+        run: |
+          echo "short=${GITHUB_SHA:0:7}" >> "${GITHUB_OUTPUT}"
+      - id: message
+        run: |
+          echo "success ${{ inputs.ref }}"
+
+  failure-notification:
+    if: failure()
+    needs:
+      - create-release 
+      - test-prod
+    runs-on: ubuntu-22.04
+    steps:
+      - id: sha
+        run: |
+          echo "short=${GITHUB_SHA:0:7}" >> "${GITHUB_OUTPUT}"
+      - id: message
+        run: |
+          echo "failure ${{ inputs.ref }}"

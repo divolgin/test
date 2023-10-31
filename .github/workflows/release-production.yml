@@ -24,7 +24,7 @@ jobs:
   get-previous-sha:
     runs-on: ubuntu-22.04
     needs:
-      - wait-for-previous
+      - wait-for-all-to-complete
     outputs:
       sha: ${{ steps.get-latest-release.outputs.sha }}
       tag_name: ${{ steps.get-latest-release.outputs.tag_name }}
@@ -44,7 +44,7 @@ jobs:
   get-sha:
     runs-on: ubuntu-22.04
     needs:
-      - wait-for-previous
+      - wait-for-all-to-complete
     outputs:
       sha: ${{ steps.rev-parse.outputs.sha }}
     steps:

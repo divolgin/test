@@ -21,8 +21,8 @@ jobs:
           NUM_RETRIES=0
           # 60 * 10 = 600 seconds = 10 minutes
           until [ $NUM_RETRIES -eq 60 ]; do
-            ((NUM_RETRIES++))
-            echo "NUM_RETRIES=${NUM_RETRIES}"
+            let NUM_RETRIES=NUM_RETRIES+1;
+            echo "NUM_RETRIES=${NUM_RETRIES}";
 
             # # List workflows and find all the release-production ones, excluding the currently running one.
             # # Wait until all of them are in the "completed" state.  "conclusion" value is not relevant here.
@@ -40,7 +40,7 @@ jobs:
             #   exit 0
             # fi
 
-            sleep 10
+            sleep 2;
           done
 
           echo "Timed out waiting for all release-production workflows to complete."

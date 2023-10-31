@@ -31,6 +31,8 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           echo "release ${{ github.sha }}"
           gh workflow run release-production.yml -f ref=${{ github.sha }} --ref main

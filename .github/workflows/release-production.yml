@@ -18,10 +18,12 @@ jobs:
         shell: bash
         run: |
           set -x
+          set -e
+          set -o pipefail
           echo "Run ID: ${{ github.run_id }}"
           NUM_RETRIES=0
-          # 60 * 10 = 600 seconds = 10 minutes
-          until [ $NUM_RETRIES -eq 60 ]; do
+          # 120 * 5 = 600 seconds = 10 minutes
+          until [ $NUM_RETRIES -eq 120 ]; do
             let NUM_RETRIES=NUM_RETRIES+1;
             echo "NUM_RETRIES=${NUM_RETRIES}";
 
@@ -38,11 +40,12 @@ jobs:
             );
 
             echo "WORKFLOWS_NOT_COMPLETED=${WORKFLOWS_NOT_COMPLETED}"
-            if [[ "${WORKFLOWS_NOT_COMPLETED}" == "0" ]]; then
-              exit 0
+            if [ "$WORKFLOWS_NOT_COMPLETED" -eq "0" ]; then
+              echo "All release-production workflows are completed."
+              exit 0;
             fi
 
-            sleep 2;
+            sleep 5;
           done
 
           echo "Timed out waiting for all release-production workflows to complete."

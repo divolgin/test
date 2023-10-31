@@ -11,5 +11,5 @@ inputs:
     description: 'Run ID of the workflow run that triggered this action'
     required: true
 runs:
-  using: 'node18'
+  using: 'node20'
   main: 'index.js'

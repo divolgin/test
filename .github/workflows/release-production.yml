@@ -15,6 +15,7 @@ jobs:
       - id: wait
         env:
           GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
           set -x
           NUM_RETRIES=0

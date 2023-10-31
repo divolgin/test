@@ -16,6 +16,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -x
           NUM_RETRIES=0
           # 60 * 10 = 600 seconds = 10 minutes
           until [ $NUM_RETRIES -eq 60 ]; do

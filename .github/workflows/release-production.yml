@@ -9,22 +9,26 @@ on:
 name: "! Production release"
 
 jobs:
-  wait-for-all-to-complete:
+  wait-for-all-to-complete: # THIS
     runs-on: ubuntu-22.04
     steps:
       - id: wait
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # List workflows and find all the release-production ones, excluding the currently running one.
+          # Wait until all of them are in the "completed" state.  "conclusion" value is not relevant here.
+          echo "Run ID: ${{ github.run_id }}"
           gh api \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/divolgin/test/actions/runs
+            /repos/divolgin/test/actions/runs | \
+          jq -c '.workflow_runs[] | select(.id != ${{ github.run_id }}) | select(.path | endswith("/release-production.yml")).status'
 
   get-previous-sha:
     runs-on: ubuntu-22.04
     needs:
-      - wait-for-all-to-complete
+      - wait-for-all-to-complete # THIS
     outputs:
       sha: ${{ steps.get-latest-release.outputs.sha }}
       tag_name: ${{ steps.get-latest-release.outputs.tag_name }}
@@ -44,7 +48,7 @@ jobs:
   get-sha:
     runs-on: ubuntu-22.04
     needs:
-      - wait-for-all-to-complete
+      - wait-for-all-to-complete # THIS
     outputs:
       sha: ${{ steps.rev-parse.outputs.sha }}
     steps:

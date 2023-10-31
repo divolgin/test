@@ -18,6 +18,7 @@ jobs:
   testim-staging:
     needs:
       - wait-for-deploy
+    runs-on: ubuntu-22.04
     steps:
       - id: release-staging
         run: |
@@ -28,6 +29,7 @@ jobs:
     if: success()
     needs:
       - testim-staging
+    runs-on: ubuntu-22.04
     steps:
       - id: release
         run: |

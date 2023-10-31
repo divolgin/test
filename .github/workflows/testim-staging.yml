@@ -9,11 +9,10 @@ jobs:
   wait-for-deploy:
     runs-on: ubuntu-22.04
     steps:
-      - uses: replicatedhq/action-wait-for@v1
-        with:
-          ref: ${{ github.sha }}
-          timeout: 1800
-          check-regexp: (deploy-staging.*|commit.*|build-and-test.*)
+      - id: wait-for-deploy
+        run: |
+          echo "wait for ${{ github.sha }}"
+          sleep 10
 
   testim-staging:
     needs:

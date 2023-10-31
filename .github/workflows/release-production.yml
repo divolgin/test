@@ -182,7 +182,6 @@ jobs:
   success-notification:
     if: success()
     needs: 
-      - create-release
       - test-prod
     runs-on: ubuntu-22.04
     steps:
@@ -196,7 +195,6 @@ jobs:
   failure-notification:
     if: failure()
     needs:
-      - create-release 
       - test-prod
     runs-on: ubuntu-22.04
     steps:

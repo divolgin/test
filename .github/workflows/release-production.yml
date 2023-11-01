@@ -67,6 +67,7 @@ jobs:
           run_id: ${{ github.run_id }}
 
   get-previous-sha:
+    # if: inputs.skip-pact-tests == false # THIS
     runs-on: ubuntu-22.04
     needs:
       - wait-for-all-to-complete # THIS
@@ -78,6 +79,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
+            console.log("++++++next_step 1:${{ needs.wait-for-all-to-complete.next_step }}")
             const {
               data: { tag_name: previous_tag_name, target_commitish: old_sha },
             } = await github.rest.repos.getLatestRelease({
@@ -98,6 +100,10 @@ jobs:
           fetch-depth: 0
       - id: rev-parse
         run: echo "sha=$(git rev-parse ${{ inputs.ref }})" >> "$GITHUB_OUTPUT"
+      - id:
+        run: console.log("++++++next_step 2:${{ needs.wait-for-all-to-complete.next_step }}")
+
+
 
   generate-tag:
     runs-on: ubuntu-22.04

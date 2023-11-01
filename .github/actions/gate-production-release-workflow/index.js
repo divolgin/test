@@ -27,7 +27,7 @@ async function get_workflow_runs() {
 
   const this_run = null;
   for (const workflow_run in workflow_runs) {
-    console.log("+++++checking id", workflow_run.id);
+    console.log("+++++checking workflow_run", workflow_run);
     if (workflow_run.id.toString() === run_id) {
       this_run = workflow_run;
       break;

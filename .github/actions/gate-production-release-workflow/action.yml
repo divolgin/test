@@ -10,6 +10,9 @@ inputs:
   run_id:
     description: 'Run ID of the workflow run that triggered this action'
     required: true
+outputs:
+  next_step:
+    description: 'Next step action: "stop" or "release"'
 runs:
   using: 'node20'
   main: 'index.js'

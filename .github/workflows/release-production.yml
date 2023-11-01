@@ -11,6 +11,8 @@ name: "! Production release"
 jobs:
   wait-for-all-to-complete: # THIS
     runs-on: ubuntu-22.04
+    outputs:
+      next-step: ${{ steps.wait.outputs.next-step }} # THIS
     steps:
       - uses: actions/checkout@v3
 
@@ -79,7 +81,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            console.log("++++++next_step 1:${{ needs.wait-for-all-to-complete.next_step }}")
+            console.log("++++++next-step 1:${{ needs.wait-for-all-to-complete.outputs.next-step }}")
             const {
               data: { tag_name: previous_tag_name, target_commitish: old_sha },
             } = await github.rest.repos.getLatestRelease({
@@ -100,7 +102,7 @@ jobs:
           fetch-depth: 0
       - id: rev-parse
         run: echo "sha=$(git rev-parse ${{ inputs.ref }})" >> "$GITHUB_OUTPUT"
-      - run: console.log("++++++next_step 2:${{ needs.wait-for-all-to-complete.next_step }}")
+      - run: console.log("++++++next-step 2:", ${{ needs.wait-for-all-to-complete.outputs.next-step }});
 
 
 

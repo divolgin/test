@@ -69,7 +69,7 @@ jobs:
           run_id: ${{ github.run_id }}
 
   get-previous-sha:
-    # if: inputs.skip-pact-tests == false # THIS
+    if: needs.wait-for-all-to-complete.outputs.next-step == "release" # THIS
     runs-on: ubuntu-22.04
     needs:
       - wait-for-all-to-complete # THIS
@@ -91,6 +91,7 @@ jobs:
             core.setOutput("tag_name", previous_tag_name);
 
   get-sha:
+    if: needs.wait-for-all-to-complete.outputs.next-step == "release" # THIS
     runs-on: ubuntu-22.04
     needs:
       - wait-for-all-to-complete # THIS

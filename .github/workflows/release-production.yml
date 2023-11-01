@@ -81,7 +81,6 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            console.log("++++++next-step 1:${{ needs.wait-for-all-to-complete.outputs.next-step }}")
             const {
               data: { tag_name: previous_tag_name, target_commitish: old_sha },
             } = await github.rest.repos.getLatestRelease({
@@ -103,7 +102,6 @@ jobs:
           fetch-depth: 0
       - id: rev-parse
         run: echo "sha=$(git rev-parse ${{ inputs.ref }})" >> "$GITHUB_OUTPUT"
-      - run: console.log("++++++next-step 2:", ${{ needs.wait-for-all-to-complete.outputs.next-step }});
 
 
 

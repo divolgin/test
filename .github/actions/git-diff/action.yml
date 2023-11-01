@@ -1,0 +1,39 @@
+name: git diff
+description: 'Detect changes in subpaths in the repo'
+inputs:
+  remote:
+    description: 'The remote to diff against'
+    required: false
+    default: 'origin'
+  branch:
+    description: 'The branch to diff against'
+    required: false
+    default: 'main'
+  subtree:
+    description: 'The subtree to diff against'
+    required: false
+    default: '.'
+outputs:
+  diff:
+    description: 'Whether there are changes in the subtree'
+    value: ${{ steps.git-diff.outputs.diff }}
+  diff-sha:
+    description: 'The resolved sha of the diff target'
+    value: ${{ steps.git-diff.outputs.sha }}
+
+runs:
+  using: composite
+  steps:
+    - run: git fetch ${{ inputs.remote }} ${{ inputs.branch }}
+      shell: bash
+    - id: git-diff
+      run: |
+        compare="${{ inputs.remote }}/${{ inputs.branch }}"
+        [ "${{ github.ref }}" = "refs/heads/${{ inputs.branch }}" ] && compare="${{ github.sha }}~1"
+        if git diff --quiet "${compare}" -- ${{ inputs.subtree }}; then
+          echo "diff=false" >> "$GITHUB_OUTPUT"
+        else
+          echo "diff=true" >> "$GITHUB_OUTPUT"
+        fi
+        echo "sha=$(git rev-parse "${compare}")" >> "$GITHUB_OUTPUT"
+      shell: bash

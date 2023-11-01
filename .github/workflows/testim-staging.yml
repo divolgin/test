@@ -25,10 +25,46 @@ jobs:
           sleep 1
 
   # THIS
-  release-production:
-    if: success()
+  get-previous-release-sha:
     needs:
       - testim-staging
+    runs-on: ubuntu-22.04
+    outputs:
+      sha: ${{ steps.get-latest-release.outputs.sha }}
+      tag_name: ${{ steps.get-latest-release.outputs.tag_name }}
+    steps:
+      - id: get-latest-release
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const {
+              data: { tag_name: previous_tag_name, target_commitish: old_sha },
+            } = await github.rest.repos.getLatestRelease({
+              ...context.repo,
+            });
+            core.setOutput("sha", old_sha);
+            core.setOutput("tag_name", previous_tag_name);
+
+  can-trigger-production-release:
+    needs:
+      - get-previous-release-sha
+    runs-on: ubuntu-22.04
+    outputs:
+      block_release: ${{ steps.changed.outputs.diff }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - id: changed
+        uses: ./.github/actions/git-diff
+        with:
+          branch: ${{ needs.get-previous-release-sha.outputs.sha }}
+          subtree: block_release
+
+  release-production:
+    if: success() && needs.can-trigger-production-release.outputs.block_release == 'true'
+    needs:
+      - can-trigger-production-release
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3

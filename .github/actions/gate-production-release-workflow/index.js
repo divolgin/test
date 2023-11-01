@@ -79,11 +79,11 @@ async function run() {
 
       if (later_runs.length > 0) {
         console.log(`Found ${later_runs.length} later runs that have already started. Stopping this workflow.`)
-        core.setOutput("next_step", "stop");
+        core.setOutput("next-step", "stop");
         return;
       }
 
-      core.setOutput("next_step", "release");
+      core.setOutput("next-step", "release");
       return;
     }
   } catch (error) {

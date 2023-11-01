@@ -65,10 +65,10 @@ async function get_workflow_runs() {
   return {earlier_runs, later_runs};
 }
 
+// If there are workflow runs that started earlier, wait for them finish before proceeding.
+// If there are workflows that started later, stop this workflow. Let new one run.
 async function run() {
-  try {
-    // If there are workflow runs that started earlier, wait for them finish before proceeding.
-    // If there are workflows that started later, stop this workflow. Let new one run.
+  try { // While this try/catch is not necessary, it seems to help Github Actions flush workflow logs.
     while (true) {
       const {earlier_runs, later_runs} = await get_workflow_runs();
       if (earlier_runs.length > 0) {
@@ -85,7 +85,6 @@ async function run() {
       return "trigger"
     }
   } catch (error) {
-    console.log("++++error", error);
     throw error;
   }
 }

@@ -23,7 +23,7 @@ async function get_workflow_runs() {
     ...github.context.repo,
   });
 
-  const this_run = null;
+  let this_run = null;
   for (const i in workflow_runs) {
     const workflow_run = workflow_runs[i];
     if (workflow_run.id.toString() === run_id) {
@@ -83,6 +83,7 @@ async function run() {
     }
   } catch (error) {
     console.log("++++error", error);
+    throw error;
   }
 }
 

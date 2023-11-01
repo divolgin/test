@@ -100,8 +100,7 @@ jobs:
           fetch-depth: 0
       - id: rev-parse
         run: echo "sha=$(git rev-parse ${{ inputs.ref }})" >> "$GITHUB_OUTPUT"
-      - id:
-        run: console.log("++++++next_step 2:${{ needs.wait-for-all-to-complete.next_step }}")
+      - run: console.log("++++++next_step 2:${{ needs.wait-for-all-to-complete.next_step }}")
 
 
 

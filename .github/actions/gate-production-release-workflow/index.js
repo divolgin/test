@@ -23,11 +23,12 @@ async function get_workflow_runs() {
     ...github.context.repo,
   });
 
-  console.log("+++++workflow_runs", workflow_runs);
+  // console.log("+++++workflow_runs", workflow_runs);
 
   const this_run = null;
   for (const workflow_run in workflow_runs) {
-    if (workflow_run.id == run_id) {
+    console.log("+++++checking id", workflow_run.id);
+    if (workflow_run.id.toString() === run_id) {
       this_run = workflow_run;
       break;
     }
@@ -64,22 +65,26 @@ async function get_workflow_runs() {
 }
 
 async function run() {
-  // If there are workflow runs that started earlier, wait for them finish before proceeding.
-  // If there are workflows that started later, stop this workflow. Let new one run.
-  while (true) {
-    const {earlier_runs, later_runs} = await get_workflow_runs();
-    if (earlier_runs.length > 0) {
-      console.log(`Found ${earlier_runs.length} earlier runs. Waiting for them to finish.`)
-      await sleep(5000);
-      continue;
-    }
+  try {
+    // If there are workflow runs that started earlier, wait for them finish before proceeding.
+    // If there are workflows that started later, stop this workflow. Let new one run.
+    while (true) {
+      const {earlier_runs, later_runs} = await get_workflow_runs();
+      if (earlier_runs.length > 0) {
+        console.log(`Found ${earlier_runs.length} earlier runs. Waiting for them to finish.`)
+        await sleep(5000);
+        continue;
+      }
 
-    if (later_runs.length > 0) {
-      console.log(`Found ${later_runs.length} later runs that have already started. Stopping this workflow.`)
-      return "stop"
-    }
+      if (later_runs.length > 0) {
+        console.log(`Found ${later_runs.length} later runs that have already started. Stopping this workflow.`)
+        return "stop"
+      }
 
-    return "trigger"
+      return "trigger"
+    }
+  } catch (error) {
+    console.log("++++error", error);
   }
 }
 

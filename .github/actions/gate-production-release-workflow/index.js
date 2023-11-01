@@ -16,16 +16,16 @@ async function get_workflow_runs() {
   const octokit = github.getOctokit(token);
 
   const {
-    data,
+    data: {
+      workflow_runs,
+    },
   } = await octokit.rest.actions.listWorkflowRunsForRepo({
     ...github.context.repo,
   });
 
-  console.log("+++++workflow_runs", data);
-
   const this_run = null;
-  for (const workflow_run in data.workflow_runs) {
-    console.log("+++++checking workflow_run", workflow_run);
+  for (const i in workflow_runs) {
+    const workflow_run = workflow_runs[i];
     if (workflow_run.id.toString() === run_id) {
       this_run = workflow_run;
       break;

@@ -15,22 +15,25 @@ async function run() {
 
     // set up github client
     const octokit = github.getOctokit(token);
+    console.log("+++++octokit", octokit);
 
     // create new release with release notes (or placeholder)
-    core.debug(
-      `call: octokit.rest.actions.listWorkflowRunsForRepo(${JSON.stringify({
-        ...github.context.repo,
-      })})`
-    );
+    // core.debug(
+    //   `call: octokit.rest.actions.listWorkflowRunsForRepo(${JSON.stringify({
+    //     ...github.context.repo,
+    //   })})`
+    // );
     const {
       data,
     } = await octokit.rest.actions.listWorkflowRunsForRepo({
       ...github.context.repo,
     });
-    core.debug(`return: ${JSON.stringify({ data })}`);
+    // core.debug(`return: ${JSON.stringify({ data })}`);
+    console.log("+++++data", data);
 
   } catch (error) {
-    core.setFailed(error.message);
+    // core.setFailed(error.message);
+    console.log("+++++error", error);
   }
 }
 

@@ -46,7 +46,7 @@ jobs:
             } = await github.rest.repos.getLatestRelease({
               ...context.repo,
             });
-            const tagRef = octokit.rest.git.getRef({
+            const tagRef = github.rest.git.getRef({
               ...context.repo,
               previous_tag_name,
             });

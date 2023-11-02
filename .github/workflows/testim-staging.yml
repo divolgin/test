@@ -62,10 +62,12 @@ jobs:
         with:
           fetch-depth: 0
       - id: changed
-        uses: ./.github/actions/git-diff
-        with:
-          branch: ${{ needs.get-previous-release-sha.outputs.sha }}
-          subtree: block_release
+        run: |
+          if git diff --quiet ${{ needs.get-previous-release-sha.outputs.sha }}..${{ github.sha }} -- block_release; then
+            echo "diff=false" >> "${GITHUB_OUTPUT}"
+          else
+            echo "diff=true" >> "${GITHUB_OUTPUT}"
+          fi
 
   release-production:
     if: success() && needs.can-trigger-production-release.outputs.block_release == 'true'

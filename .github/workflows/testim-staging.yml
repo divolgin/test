@@ -62,9 +62,9 @@ jobs:
             } = await github.rest.repos.getLatestRelease({
               ...context.repo,
             });
-            const debugRef = await github.rest.git.getTag({
+            const debugRef = await github.rest.git.getRef({
               ...context.repo,
-              tag_sha: previous_tag_name,
+              ref: `tags/${previous_tag_name}`,
             })
             console.log("+++++debugRef:", debugRef);
             core.setOutput("sha", old_sha);

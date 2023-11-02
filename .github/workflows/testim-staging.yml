@@ -33,24 +33,35 @@ jobs:
       sha: ${{ steps.get-latest-release.outputs.sha }}
       tag_name: ${{ steps.get-latest-release.outputs.tag_name }}
     steps:
+      # - id: get-latest-release
+      #   uses: actions/github-script@v6
+      #   with:
+      #     script: |
+      #       const debug = await github.rest.repos.getLatestRelease({
+      #         ...context.repo,
+      #       });
+      #       console.log("++++latest release: ", debug);
+      #       const {
+      #         data: { tag_name: previous_tag_name, target_commitish: old_sha },
+      #       } = await github.rest.repos.getLatestRelease({
+      #         ...context.repo,
+      #       });
+      #       const tagRef = github.rest.git.getRef({
+      #         ...context.repo,
+      #         previous_tag_name,
+      #       });
+      #       console.log("++++latest tagRef: ", tagRef);
+      #       core.setOutput("sha", old_sha);
+      #       core.setOutput("tag_name", previous_tag_name);
       - id: get-latest-release
         uses: actions/github-script@v6
         with:
           script: |
-            const debug = await github.rest.repos.getLatestRelease({
-              ...context.repo,
-            });
-            console.log("++++latest release: ", debug);
             const {
               data: { tag_name: previous_tag_name, target_commitish: old_sha },
             } = await github.rest.repos.getLatestRelease({
               ...context.repo,
             });
-            const tagRef = github.rest.git.getRef({
-              ...context.repo,
-              previous_tag_name,
-            });
-            console.log("++++latest tagRef: ", tagRef);
             core.setOutput("sha", old_sha);
             core.setOutput("tag_name", previous_tag_name);
 

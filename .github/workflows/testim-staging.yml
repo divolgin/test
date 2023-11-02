@@ -37,6 +37,10 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
+            const debug = await github.rest.repos.getLatestRelease({
+              ...context.repo,
+            });
+            console.log("++++latest release: ", debug);
             const {
               data: { tag_name: previous_tag_name, target_commitish: old_sha },
             } = await github.rest.repos.getLatestRelease({

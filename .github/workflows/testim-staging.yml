@@ -82,5 +82,5 @@ jobs:
         run: |
           echo "release ${{ github.sha }}"
           gh workflow run release-production.yml -f ref=${{ github.sha }} --ref main
-          echo "hi"
+          echo "some change"
 

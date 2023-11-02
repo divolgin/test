@@ -64,8 +64,10 @@ jobs:
       - id: changed
         run: |
           if git diff --quiet ${{ needs.get-previous-release-sha.outputs.sha }}..${{ github.sha }} -- block_release; then
+            echo "++++setting to false"
             echo "diff=false" >> "${GITHUB_OUTPUT}"
           else
+            echo "++++setting to true"
             echo "diff=true" >> "${GITHUB_OUTPUT}"
           fi
 
